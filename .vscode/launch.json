@@ -10,7 +10,7 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--profile-temp", // please check 'workbench.experimental.settingsProfiles.enabled'
+				// "--profile-temp", // please check 'workbench.experimental.settingsProfiles.enabled'
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [

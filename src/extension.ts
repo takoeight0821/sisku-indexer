@@ -17,15 +17,8 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showWarningMessage('No active document');
 			return;
 		} else {
-			const symbols: DocumentSymbol[] = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri);
-			let infos: [DocumentSymbol, Hover[]][] = [];
-			for (const symbol of symbols) {
-				// Use selectionRange instead of range to get the hover for the symbol name.
-				// This is important for symbols like functions, where the range is the entire function body or something.
-				const hovers: Hover[] = await vscode.commands.executeCommand('vscode.executeHoverProvider', uri, symbol.selectionRange.start);
-				infos.push([symbol, hovers]);
-			}
-			for (const [symbol, hovers] of infos) {
+			const info = await buildInfo(uri);
+			for (const [symbol, hovers] of info) {
 				console.log('Symbol: ' + symbol.name);
 				for (const hover of hovers) {
 					console.log(renderHover(hover));
@@ -34,6 +27,26 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showWarningMessage('Index Current File');
 		}
 	}));
+}
+
+async function buildInfo(uri: vscode.Uri): Promise<[DocumentSymbol, Hover[]][]> {
+	// TODO: flatten document symbols recursively.
+	let symbols: DocumentSymbol[] = await vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', uri);
+	if ('children' in symbols[0]) {
+		const children = symbols[0].children;
+		if (children !== undefined) {
+			symbols = symbols.concat(children);
+		}
+	}
+
+	let infos: [DocumentSymbol, Hover[]][] = [];
+	for (const symbol of symbols) {
+		// Use selectionRange instead of range to get the hover for the symbol name.
+		// This is important for symbols like functions, where the range is the entire function body or something.
+		const hovers: Hover[] = await vscode.commands.executeCommand('vscode.executeHoverProvider', uri, symbol.selectionRange.start);
+		infos.push([symbol, hovers]);
+	}
+	return infos;
 }
 
 function renderHover(hover: Hover): string {
